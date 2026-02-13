@@ -4,6 +4,12 @@ allprojects {
     repositories {
         //mavenLocal()
         mavenCentral()
+        maven { url 'https://repo.spring.io/milestone' }
+        maven { url 'https://repo.spring.io/snapshot' }
+        maven {
+            name = 'Central Portal Snapshots'
+            url = 'https://central.sonatype.com/repository/maven-snapshots/'
+        }
     }
 }
 
@@ -37,9 +43,9 @@ subprojects {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         compileOnly "org.projectlombok:lombok:${lombokVersion}"
-        annotationProcessor  "org.projectlombok:lombok:${lombokVersion}"
-        testCompileOnly  "org.projectlombok:lombok:${lombokVersion}"
-        testAnnotationProcessor  "org.projectlombok:lombok:${lombokVersion}"
+        annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+        testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+        testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
     }
 
