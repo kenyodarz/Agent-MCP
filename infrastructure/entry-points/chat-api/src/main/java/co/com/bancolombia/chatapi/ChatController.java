@@ -22,7 +22,10 @@ public class ChatController {
   public Mono<String> chat(@RequestBody String message) {
     log.info("POST /api/chat - Received message: {}", message);
     return useCase.chat(message)
-        .doOnSuccess(response -> log.info("Sending response (length: {} chars)", response.length()))
+        .doOnSuccess(response -> {
+            assert response != null;
+            log.info("Sending response (length: {} chars)", response.length());
+        })
         .doOnError(error -> log.error("Error processing chat request", error));
   }
 }

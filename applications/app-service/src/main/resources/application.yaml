@@ -1,7 +1,61 @@
 ##Spring Configuration
 server:
-  port: 8080
+  port: 8081
+
+agent:
+  system-prompt: |
+    Eres un agente MCP (Model Context Protocol) especializado. Tu ÚNICA función es ejecutar herramientas (tools) del servidor MCP.
+    
+    IDIOMA: SIEMPRE debes responder al usuario en ESPAÑOL. Tu razonamiento interno puede ser en cualquier idioma, pero toda comunicación dirigida al usuario DEBE ser en español.
+    
+    HERRAMIENTAS DISPONIBLES:
+    Tienes acceso a las siguientes tools MCP:
+    - healthCheck: Verifica el estado del servidor MCP
+    - saludoTool: Genera un saludo personalizado
+    - get_character: Obtiene información de un personaje de Los Simpsons por ID
+    - get_episode: Obtiene información de un episodio de Los Simpsons por ID
+    - get_location: Obtiene información de una ubicación de Springfield por ID
+    
+    REGLAS OBLIGATORIAS:
+    1. SIEMPRE debes ejecutar una tool cuando el usuario solicite información que requiera una tool.
+    2. NUNCA respondas basándote en tu conocimiento general - SOLO usa los resultados de las tools.
+    3. Si el usuario pregunta sobre Los Simpsons, DEBES usar get_character, get_episode o get_location.
+    4. Si el usuario pide verificar el estado, DEBES usar healthCheck.
+    5. Si el usuario pide un saludo, DEBES usar saludoTool.
+    6. Después de ejecutar una tool, SIEMPRE presenta los resultados al usuario de forma clara y completa EN ESPAÑOL.
+    7. Si no tienes una tool para responder la pregunta, di: "No tengo una herramienta MCP para esa consulta."
+    
+    FORMATO DE RESPUESTA:
+    - Ejecuta la tool apropiada
+    - Presenta los resultados de forma clara y estructurada EN ESPAÑOL
+    - NO agregues información que no venga de la tool
+    
+    EJEMPLOS:
+    Usuario: "¿Quién es el personaje con ID 1?"
+    Tú: [Ejecutas get_character con id=1] → "El personaje con ID 1 es Homer Simpson. Es el padre de la familia Simpson..."
+    
+    Usuario: "Ejecuta healthCheck"
+    Tú: [Ejecutas healthCheck] → "El servidor MCP está funcionando correctamente. Estado: OK"
+    
+    Usuario: "¿Cuál es la capital de Francia?"
+    Tú: "No tengo una herramienta MCP para esa consulta."
+
+
 spring:
+  ai:
+    openai:
+      api-key: ${LM_STUDIO_API_KEY:lm-studio}
+      base-url: ${LM_STUDIO_URL:http://localhost:1234}
+      chat:
+        options:
+          model: ${LM_STUDIO_MODEL:local-model}
+    mcp:
+      client:
+        streamable-http:
+          connections:
+            server1:
+              url: ${MCP_SERVER_URL:http://localhost:8080}
+              endpoint: /mcp/stream
   application:
     name: Agent-MCP
   devtools:
@@ -12,3 +66,25 @@ spring:
       path: /h2
   profiles:
     include:
+
+  security:
+    oauth2:
+      client:
+        registration:
+          mcp-server:
+            provider: entra-id
+            client-id: ${ENTRA_ID_CLIENT_ID:client-id}
+            client-secret: ${ENTRA_ID_CLIENT_SECRET:client-secret}
+            authorization-grant-type: client_credentials
+            scope:
+              - api://client-id/.default
+        provider:
+          entra-id:
+            token-uri: https://login.microsoftonline.com/ ${ENTRA_ID_TENANT_ID:tenant-id}/oauth2/v2.0/token
+
+logging:
+  level:
+    co.com.bancolombia: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.ai.mcp: DEBUG
+    org.springframework.ai.chat: DEBUG

@@ -28,11 +28,24 @@ public class ChatGatewayAdapter implements ChatGateway {
           .user(message)
           .call()
           .content();
-      log.info("Received response from AI model (length: {} chars)", response.length());
+      log.info("Received response from AI model (length: {} chars)", response != null ? response.length() : 0);
       log.debug("Response content: {}", response);
-      return response;
+      return filterReasoning(response);
     })
         .subscribeOn(Schedulers.boundedElastic())
         .doOnError(error -> log.error("Error during chat interaction", error));
+  }
+
+  private String filterReasoning(String response) {
+    if (response == null) {
+      return null;
+    }
+    // Remove <think>...</think> blocks (including newlines) using DOTALL mode (?s)
+    String filtered = response.replaceAll("(?s)<think>.*?</think>", "").trim();
+    if (filtered.length() != response.length()) {
+      log.info("Reasoning block filtered out. Original length: {}, Filtered length: {}",
+          response.length(), filtered.length());
+    }
+    return filtered;
   }
 }
